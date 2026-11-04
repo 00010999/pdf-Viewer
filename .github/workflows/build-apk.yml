@@ -27,30 +27,25 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # Ubuntu-latest runners already have ANDROID_HOME pre-installed!
-      - name: Verify Android SDK
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          ls -la $ANDROID_HOME/build-tools || true
-
       - name: Install Node Dependencies
-        run: npm install
+        run: |
+          npm install
+          npm install --save @capacitor/core @capacitor/android
+          npm install --save-dev @capacitor/cli
 
       - name: Build Web Application
         run: npm run build
 
-      - name: Initialize Capacitor Android Project
+      - name: Add Android Platform
         run: |
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init "Modern PDF Viewer" "com.modernpdf.app" --web-dir dist
           npx cap add android
           npx cap sync android
 
-      - name: Build Debug APK
+      - name: Build Debug APK with Gradle
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK as Workflow Artifact
         uses: actions/upload-artifact@v4
@@ -60,11 +55,11 @@ jobs:
 
       - name: Publish APK to GitHub Releases
         uses: softprops/action-gh-release@v2
-        if: always()
+        if: success()
         with:
           tag_name: android-apk-v1.0
           name: "Modern PDF Viewer - Android APK Download"
-          body: "Direct APK download for Android phones. Install on any Android device to read and annotate PDFs offline."
+          body: "Direct APK download for Android phones. Install on any Android device to read, annotate and edit PDFs offline."
           files: android/app/build/outputs/apk/debug/app-debug.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
