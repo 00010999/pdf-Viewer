@@ -21,20 +21,17 @@ jobs:
         with:
           node-version: 20
 
-      - name: Set up JDK 21
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '17'
           distribution: 'temurin'
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
 
       - name: Install Dependencies
         run: |
           npm install
-          npm install --save @capacitor/core@latest @capacitor/android@latest
-          npm install --save-dev @capacitor/cli@latest
+          npm install --save @capacitor/core@6.2.0 @capacitor/android@6.2.0
+          npm install --save-dev @capacitor/cli@6.2.0
 
       - name: Build Web Application
         run: npm run build
@@ -44,12 +41,11 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Accept Android Licenses & Build Debug APK
+      - name: Build Debug APK with Gradle
         working-directory: android
         run: |
-          yes | sdkmanager --licenses || true
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK as Workflow Artifact
         uses: actions/upload-artifact@v4
