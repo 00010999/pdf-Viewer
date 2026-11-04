@@ -1,32 +1,77 @@
-# React + TypeScript + Vite
+# Modern PDF Viewer – Complete Desktop Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A fully functional, native offline PDF viewer and editor with a minimalist, clean, and intuitive interface inspired by Apple Preview and Linear.
 
-Currently, two official plugins are available:
+![Modern PDF Viewer](src/assets/hero.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ Key Features
 
-## React Compiler
+### 1. High-Performance PDF Viewing & Rendering
+- **Multi-View Modes**: Continuous vertical scroll, single-page view, and two-page book spread.
+- **Smart Page Virtualization**: Built with `IntersectionObserver` to handle large and dense PDF documents (50 to 500+ pages) without out-of-memory or GPU freezes.
+- **Granular Zoom**: Fit to Width, Fit to Page, 100% Actual Size, custom percentages (50% to 200%), and interactive `+` / `-` zoom shortcuts.
+- **Full Screen & Rotation**: Presentation mode and 90° clockwise/anticlockwise page rotation.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 2. Comprehensive Annotation & Markup
+- **Toggleable Annotation Bar**: One-click **Annotate: On / Off** button in the navbar for distraction-free reading.
+- **Text Markups**: Highlight, underline, and strikethrough.
+- **Freehand Drawing**: Smooth Pen and Pencil tools with adjustable thickness and customizable color palette.
+- **Shapes & Callouts**: Geometric shapes (Rectangle, Circle, Line, Arrow), text boxes, sticky notes, and image insertion.
+- **History & Undo/Redo**: Full multi-level undo/redo stack and interactive eraser.
+- **True Vector Baking**: Bake annotations directly into the PDF binary so external viewers display them permanently.
 
-## Expanding the Oxlint configuration
+### 3. Real PDF Document Manipulation
+- **Page Operations**: Rotate individual pages, duplicate pages, delete pages, add blank pages, and reorder pages.
+- **Document Utilities**: Crop page margins, merge multiple PDFs, extract custom page ranges, and split all pages into a `.zip` archive.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+### 4. Search, Navigation & Organization
+- **Instant Search**: Full-text search with match counters, whole-word, and case-sensitive filters.
+- **Document Outline & Thumbnails**: Table of contents navigation, lazy-rendered page thumbnails, and user bookmarks.
+- **Personal Notes**: Persistent notes attached to each document.
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+### 5. 100% Offline & Local First
+- Zero external network dependencies, no cloud telemetry, and no uploading private documents to external servers.
+- Native Windows File Explorer open/save dialog integration.
+- Fast Base64 chunk streaming between the Electron main process and renderer for handling heavy multi-megabyte PDFs.
+
+---
+
+## 🚀 Download & Installation
+
+### Option 1: Standalone Windows Installer (`.exe`)
+Download the single-file installer **`Modern PDF Viewer Setup 1.0.0.exe`** from the [Releases](https://github.com/00010999/pdf-Viewer/releases) section:
+1. Double-click the `.exe` on any Windows PC.
+2. It automatically installs the application, creates a desktop shortcut, and adds it to the Start Menu.
+3. No internet connection or Node.js runtime required.
+
+### Option 2: Run from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/00010999/pdf-Viewer.git
+cd pdf-Viewer
+
+# Install dependencies
+npm install
+
+# Run the desktop application
+npm run app
+
+# Build standalone distribution files
+npm run dist
+
+# Create standalone installer (.exe)
+npm run package
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+---
+
+## 🛠️ Tech Stack
+
+- **Desktop Framework**: Electron 45
+- **UI Architecture**: React 19 + TypeScript + Vite
+- **Styling**: Tailwind CSS v4
+- **Icons**: Lucide React
+- **PDF Rendering**: PDF.js (`pdfjs-dist`) with local offline worker & cmaps
+- **PDF Manipulation**: `pdf-lib`
+- **Packaging**: `electron-builder`
