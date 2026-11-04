@@ -65,32 +65,41 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <div className="flex-1 flex overflow-hidden bg-zinc-50/50 dark:bg-zinc-950">
+    <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-zinc-50/50 dark:bg-zinc-950">
       {/* Sidebar Navigation */}
-      <aside className="w-64 border-r border-zinc-200/80 dark:border-zinc-800/80 flex flex-col p-4 bg-white dark:bg-zinc-900/50">
-        <div className="flex items-center gap-2.5 px-2 py-3 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-xs">
-            <BookOpen size={18} />
+      <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-zinc-200/80 dark:border-zinc-800/80 flex flex-col p-3 md:p-4 bg-white dark:bg-zinc-900/50">
+        <div className="flex items-center justify-between md:justify-start gap-2.5 px-2 py-2 md:py-3 mb-2 md:mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-xs">
+              <BookOpen size={18} />
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+                Modern PDF
+              </h1>
+              <p className="text-[11px] text-zinc-500">Universal Edition</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-              Modern PDF
-            </h1>
-            <p className="text-[11px] text-zinc-500">v1.0 Desktop Edition</p>
-          </div>
+          <button
+            onClick={onOpenFilePicker}
+            className="md:hidden flex items-center gap-1.5 py-1.5 px-3 bg-blue-600 text-white rounded-lg text-xs font-medium shadow-xs"
+          >
+            <Plus size={14} />
+            <span>Open PDF</span>
+          </button>
         </div>
 
-        {/* Primary Action Button */}
+        {/* Primary Action Button (Desktop) */}
         <button
           onClick={onOpenFilePicker}
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-xs font-medium shadow-xs transition-colors mb-6 cursor-pointer"
+          className="hidden md:flex w-full items-center justify-center gap-2 py-2 px-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-xs font-medium shadow-xs transition-colors mb-6 cursor-pointer"
         >
           <Plus size={15} />
           <span>Open PDF File</span>
         </button>
 
         {/* Quick Nav Categories */}
-        <nav className="space-y-1">
+        <nav className="flex md:flex-col gap-1 overflow-x-auto">
           <button
             onClick={() => onChangeFilter('all')}
             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer ${

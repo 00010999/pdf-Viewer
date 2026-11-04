@@ -109,7 +109,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
       {/* Middle: Page navigation & Zoom controls */}
       <div className="flex items-center gap-1 sm:gap-2">
         {/* Page Nav */}
-        <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-lg px-2 py-1">
+        <div className="flex items-center gap-0.5 sm:gap-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-lg px-1.5 sm:px-2 py-1">
           <button
             onClick={() => onGoToPage(currentPage - 1)}
             disabled={currentPage <= 1}
@@ -131,7 +131,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                   onGoToPage(val);
                 }
               }}
-              className="w-8 text-center bg-transparent focus:outline-none font-medium text-zinc-800 dark:text-zinc-200"
+              className="w-7 sm:w-8 text-center bg-transparent focus:outline-none font-medium text-zinc-800 dark:text-zinc-200"
             />
             <span className="text-zinc-400">/ {totalPages}</span>
           </div>
@@ -149,7 +149,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         <div className="w-[1px] h-4 bg-zinc-200 dark:bg-zinc-800 mx-1 hidden sm:block" />
 
         {/* Zoom controls */}
-        <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-lg px-1.5 py-1">
+        <div className="hidden sm:flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-lg px-1.5 py-1">
           <button
             onClick={onZoomOut}
             title="Zoom Out (-)"
@@ -228,7 +228,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
       </div>
 
       {/* Right: Actions, Edit Tools, Print, Save, Fullscreen */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
         <button
           onClick={onToggleSearch}
           title="Search Document (Ctrl+F)"
@@ -240,7 +240,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         <button
           onClick={onRotateDocument}
           title="Rotate Pages Clockwise"
-          className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+          className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer hidden sm:block"
         >
           <RotateCw size={15} />
         </button>
@@ -248,20 +248,20 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         <button
           onClick={onToggleAnnotationBar}
           title={showAnnotationBar ? "Hide Annotation Toolbar" : "Show Annotation Toolbar"}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
             showAnnotationBar
               ? 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50'
               : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
           }`}
         >
           <Edit3 size={13} className={showAnnotationBar ? 'text-blue-600' : 'text-zinc-500'} />
-          <span>{showAnnotationBar ? 'Annotate: On' : 'Annotate: Off'}</span>
+          <span className="hidden sm:inline">{showAnnotationBar ? 'Annotate: On' : 'Annotate: Off'}</span>
         </button>
 
         <button
           onClick={onOpenEditModal}
           title="Edit & Organize Pages (Split, Merge, Reorder, Delete)"
-          className="flex items-center gap-1 px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg text-xs font-medium text-zinc-800 dark:text-zinc-200 transition-colors cursor-pointer"
+          className="flex items-center gap-1 px-2 py-1 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg text-xs font-medium text-zinc-800 dark:text-zinc-200 transition-colors cursor-pointer hidden md:flex"
         >
           <Layers size={13} className="text-purple-500" />
           <span>Pages</span>
@@ -270,7 +270,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         <button
           onClick={onPrintPDF}
           title="Print Document"
-          className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer hidden md:block"
+          className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer hidden lg:block"
         >
           <Printer size={15} />
         </button>
@@ -278,18 +278,18 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         <button
           onClick={onExportPDF}
           title="Export / Download with Annotations"
-          className="flex items-center gap-1.5 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors shadow-2xs cursor-pointer ml-1"
+          className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors shadow-2xs cursor-pointer"
         >
           <Download size={13} />
-          <span>Save PDF</span>
+          <span className="hidden sm:inline">Save</span>
         </button>
 
-        <div className="w-[1px] h-4 bg-zinc-200 dark:bg-zinc-800 mx-1" />
+        <div className="w-[1px] h-4 bg-zinc-200 dark:bg-zinc-800 mx-1 hidden sm:block" />
 
         <button
           onClick={onToggleFullScreen}
           title="Full Screen / Presentation Mode"
-          className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+          className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer hidden md:block"
         >
           <Maximize2 size={15} />
         </button>
