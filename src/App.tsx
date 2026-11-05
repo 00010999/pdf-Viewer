@@ -623,7 +623,10 @@ export function App() {
 
   // Export / Download Handlers
   const handleSaveAnnotatedPDF = async () => {
-    if (!rawPdfBytes) return;
+    if (!rawPdfBytes) {
+      alert('No document is open to save.');
+      return;
+    }
     setIsLoading(true);
     try {
       const bakedBytes = await bakeAnnotationsIntoPDF(rawPdfBytes, annotations);
@@ -636,11 +639,16 @@ export function App() {
         // Also update local storage cache so edits persist
         storePDFData(currentDocId, bakedBytes);
         setRawPdfBytes(bakedBytes);
+        if (result.method !== 'share_canceled') {
+          alert(`✅ "${targetName}" saved successfully!`);
+        }
+      } else {
+        alert('Could not save PDF file. Please check storage permissions.');
       }
       setShowExportModal(false);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert('Error baking annotations into PDF.');
+      alert('Error saving PDF: ' + (e?.message || e));
     } finally {
       setIsLoading(false);
     }
@@ -1269,8 +1277,11 @@ export function App() {
           onClose={() => setShowScannerModal(false)}
           onSavePDF={async (pdfBytes, scannedName) => {
             setShowScannerModal(false);
-            await saveOrExportPDF(pdfBytes, scannedName);
-            handleLoadPDFBytes(pdfBytes, scannedName);
+            await handleLoadPDFBytes(pdfBytes, scannedName);
+            const result = await saveOrExportPDF(pdfBytes, scannedName);
+            if (result.success && result.method !== 'share_canceled') {
+              alert(`✅ "${scannedName}" saved successfully!`);
+            }
           }}
         />
       )}

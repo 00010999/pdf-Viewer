@@ -1,78 +1,131 @@
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
+import { Capacitor } from '@capacitor/core';
 
 /**
- * Convert Uint8Array to base64 string safely in chunks
+ * Convert Uint8Array to base64 string safely without call-stack overflow limits
  */
-export function uint8ArrayToBase64(bytes: Uint8Array): string {
+export function uint8ArrayToBase64(bytes: Uint8Array): Promise<string> {
+  return new Promise((resolve) => {
+    if (typeof FileReader !== 'undefined') {
+      const blob = new Blob([bytes as any], { type: 'application/pdf' });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const res = (reader.result as string) || '';
+        const commaIdx = res.indexOf(',');
+        resolve(commaIdx >= 0 ? res.substring(commaIdx + 1) : res);
+      };
+      reader.onerror = () => {
+        resolve(uint8ArrayToBase64Loop(bytes));
+      };
+      reader.readAsDataURL(blob);
+    } else {
+      resolve(uint8ArrayToBase64Loop(bytes));
+    }
+  });
+}
+
+function uint8ArrayToBase64Loop(bytes: Uint8Array): string {
   let binary = '';
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunkSize)));
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
   }
   return btoa(binary);
 }
 
 /**
- * Universal file save and export function that works seamlessly on:
+ * Universal file save and export function that works on:
+ * - Android Phones (Capacitor Cache/Documents + Native FileProvider Share sheet)
  * - Windows PC (Electron native Save As file dialog)
- * - Android Phones (Capacitor Filesystem Documents folder + Native Share Sheet)
  * - Mobile Web (Web Share API)
- * - Desktop Browser (Browser direct file download with delayed URL revocation)
+ * - Desktop Browser (Direct file download with 30s blob retention)
  */
 export async function saveOrExportPDF(
   pdfBytes: Uint8Array,
   fileName: string
-): Promise<{ success: boolean; method: string }> {
+): Promise<{ success: boolean; method: string; path?: string }> {
   const safeName = fileName.trim()
     ? fileName.trim().toLowerCase().endsWith('.pdf')
       ? fileName.trim()
       : `${fileName.trim()}.pdf`
     : 'document.pdf';
 
-  // 1. Desktop App (Electron)
+  // 1. Desktop App (Electron on Windows/Mac/Linux)
   if (typeof window !== 'undefined' && (window as any).electronAPI?.savePDFDialog) {
     try {
-      const base64Data = uint8ArrayToBase64(pdfBytes);
+      const base64Data = await uint8ArrayToBase64(pdfBytes);
       const saved = await (window as any).electronAPI.savePDFDialog({
         defaultName: safeName,
         fileBase64: base64Data,
       });
       return { success: !!saved, method: 'electron' };
     } catch (err) {
-      console.warn('Electron save dialog failed, trying browser download:', err);
+      console.warn('Electron save dialog failed, falling back:', err);
     }
   }
 
   // 2. Android / iOS Native Capacitor App
-  try {
-    const base64Data = uint8ArrayToBase64(pdfBytes);
-    // Write directly to Documents directory on Android
-    const writeResult = await Filesystem.writeFile({
-      path: safeName,
-      data: base64Data,
-      directory: Directory.Documents,
-      recursive: true,
-    });
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const base64Data = await uint8ArrayToBase64(pdfBytes);
 
-    if (writeResult && writeResult.uri) {
-      // Also open the native Android Share/Save sheet so user can save/view anywhere
+      // Step A: Write to Cache (Always writable, no permissions required on any Android version)
+      let cacheUri = '';
       try {
-        await Share.share({
-          title: safeName,
-          text: `PDF: ${safeName}`,
-          url: writeResult.uri,
-          dialogTitle: `Save or Share ${safeName}`,
+        const cacheRes = await Filesystem.writeFile({
+          path: safeName,
+          data: base64Data,
+          directory: Directory.Cache,
+          recursive: true,
         });
-      } catch (shareErr: any) {
-        // User may have dismissed share dialog, file is still saved in Documents
-        console.log('Share dismissed or completed:', shareErr);
+        cacheUri = cacheRes.uri;
+      } catch (cErr) {
+        console.warn('Cache write failed:', cErr);
       }
-      return { success: true, method: 'capacitor_filesystem' };
+
+      // Step B: Also attempt writing to Documents (works on Android with legacy storage)
+      let docUri = '';
+      try {
+        const docRes = await Filesystem.writeFile({
+          path: safeName,
+          data: base64Data,
+          directory: Directory.Documents,
+          recursive: true,
+        });
+        docUri = docRes.uri;
+      } catch (dErr) {
+        console.warn('Documents write failed (normal on scoped storage):', dErr);
+      }
+
+      const fileToShare = docUri || cacheUri;
+      if (fileToShare) {
+        // Step C: Trigger native Android FileProvider Share Sheet
+        // On Android, passing `files` with a file:// or content:// URI launches the system chooser
+        // with "Save to device / Downloads / Drive / etc."
+        try {
+          await Share.share({
+            title: safeName,
+            files: [fileToShare],
+            dialogTitle: `Save or Share ${safeName}`,
+          });
+          return { success: true, method: 'capacitor_native', path: fileToShare };
+        } catch (shareErr: any) {
+          if (
+            shareErr?.name === 'AbortError' ||
+            shareErr?.message?.includes('canceled') ||
+            shareErr?.message?.includes('cancelled')
+          ) {
+            return { success: true, method: 'share_canceled' };
+          }
+          console.warn('Native Share failed after file write:', shareErr);
+          // File was successfully written to disk anyway
+          return { success: true, method: 'capacitor_file_written', path: fileToShare };
+        }
+      }
+    } catch (capErr: any) {
+      console.error('Capacitor native filesystem error:', capErr);
     }
-  } catch (capErr) {
-    // If Capacitor is not native platform (e.g. running in standard browser), proceed to Web Share / Blob download
-    console.log('Capacitor native filesystem not available, falling back to Web API:', capErr);
   }
 
   // 3. Mobile Web Browser (Web Share API)
@@ -90,10 +143,9 @@ export async function saveOrExportPDF(
       return { success: true, method: 'web_share' };
     } catch (shareErr: any) {
       if (shareErr.name === 'AbortError') {
-        // User intentionally cancelled share sheet
-        return { success: false, method: 'share_canceled' };
+        return { success: true, method: 'share_canceled' };
       }
-      console.warn('Web Share failed, attempting direct download:', shareErr);
+      console.warn('Web Share failed, falling back to download:', shareErr);
     }
   }
 
@@ -107,7 +159,6 @@ export async function saveOrExportPDF(
     document.body.appendChild(link);
     link.click();
 
-    // Do NOT revoke immediately! Keep alive for 30 seconds so download completes
     setTimeout(() => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
