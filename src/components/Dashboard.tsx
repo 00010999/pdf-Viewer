@@ -12,6 +12,7 @@ import {
   Sun,
   Moon,
   Sliders,
+  Camera,
 } from 'lucide-react';
 import { RecentDocument } from '../types';
 
@@ -20,6 +21,7 @@ interface DashboardProps {
   onOpenDoc: (doc: RecentDocument) => void;
   onOpenFilePicker: () => void;
   onOpenSampleDoc: () => void;
+  onOpenScanner?: () => void;
   onToggleFavorite: (id: string, e: React.MouseEvent) => void;
   onRemoveDoc: (id: string, e: React.MouseEvent) => void;
   activeFilter: 'all' | 'favorites';
@@ -36,6 +38,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onOpenDoc,
   onOpenFilePicker,
   onOpenSampleDoc,
+  onOpenScanner,
   onToggleFavorite,
   onRemoveDoc,
   activeFilter,
@@ -108,6 +111,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <Sliders size={15} />
               </button>
             )}
+            {onOpenScanner && (
+              <button
+                onClick={onOpenScanner}
+                title="Scan Document with Camera"
+                className="flex items-center gap-1.5 py-1.5 px-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-lg text-xs font-medium shadow-xs cursor-pointer transition-colors"
+              >
+                <Camera size={14} />
+                <span className="hidden sm:inline">Scan</span>
+              </button>
+            )}
             <button
               onClick={onOpenFilePicker}
               className="flex items-center gap-1.5 py-1.5 px-3 bg-blue-600 text-white rounded-lg text-xs font-medium shadow-xs"
@@ -119,13 +132,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Primary Action Button (Desktop) */}
-        <button
-          onClick={onOpenFilePicker}
-          className="hidden md:flex w-full items-center justify-center gap-2 py-2 px-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-xs font-medium shadow-xs transition-colors mb-6 cursor-pointer"
-        >
-          <Plus size={15} />
-          <span>Open PDF File</span>
-        </button>
+        <div className="hidden md:flex flex-col gap-2 mb-6">
+          <button
+            onClick={onOpenFilePicker}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-xs font-medium shadow-xs transition-colors cursor-pointer"
+          >
+            <Plus size={15} />
+            <span>Open PDF File</span>
+          </button>
+          {onOpenScanner && (
+            <button
+              onClick={onOpenScanner}
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-emerald-50 hover:bg-emerald-100/80 active:bg-emerald-200/80 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/50 rounded-lg text-xs font-medium shadow-2xs transition-colors cursor-pointer"
+            >
+              <Camera size={15} />
+              <span>Scan to PDF</span>
+            </button>
+          )}
+        </div>
 
         {/* Quick Nav Categories */}
         <nav className="flex md:flex-col gap-1 overflow-x-auto">

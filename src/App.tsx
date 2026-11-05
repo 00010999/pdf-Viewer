@@ -50,6 +50,7 @@ import { EditModal } from './components/EditModal';
 import { DocumentPropertiesModal } from './components/DocumentPropertiesModal';
 import { SettingsModal } from './components/SettingsModal';
 import { ExportModal } from './components/ExportModal';
+import { DocumentScannerModal } from './components/DocumentScannerModal';
 
 export function App() {
   // App views
@@ -97,6 +98,7 @@ export function App() {
   const [showPropertiesModal, setShowPropertiesModal] = useState<boolean>(false);
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
+  const [showScannerModal, setShowScannerModal] = useState<boolean>(false);
 
   // Settings & Recent
   const [settings, setSettings] = useState<AppSettings>(loadSettings());
@@ -1016,6 +1018,7 @@ export function App() {
           theme={settings.theme}
           onToggleTheme={handleToggleTheme}
           onOpenSettings={() => setShowSettingsModal(true)}
+          onOpenScanner={() => setShowScannerModal(true)}
         />
       )}
 
@@ -1044,6 +1047,7 @@ export function App() {
             onOpenEditModal={() => setShowEditModal(true)}
             onOpenProperties={() => setShowPropertiesModal(true)}
             onOpenSettings={() => setShowSettingsModal(true)}
+            onOpenScanner={() => setShowScannerModal(true)}
             onExportPDF={() => setShowExportModal(true)}
             onPrintPDF={handlePrint}
             onBackToDashboard={() => setCurrentView('dashboard')}
@@ -1244,6 +1248,17 @@ export function App() {
           onExportAnnotationsJson={handleExportAnnotationsJson}
           onCompressPDF={handleCompressPDF}
           onClose={() => setShowExportModal(false)}
+        />
+      )}
+
+      {showScannerModal && (
+        <DocumentScannerModal
+          isOpen={showScannerModal}
+          onClose={() => setShowScannerModal(false)}
+          onSavePDF={(pdfBytes, scannedName) => {
+            setShowScannerModal(false);
+            handleLoadPDFBytes(pdfBytes, scannedName);
+          }}
         />
       )}
 

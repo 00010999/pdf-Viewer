@@ -495,7 +495,8 @@ export async function splitPDFToZip(
  * Convert images (data URLs or File array) into a combined PDF
  */
 export async function convertImagesToPDF(
-  images: { name: string; dataUrl: string }[]
+  images: { name?: string; dataUrl: string }[],
+  pageSize: 'fit' | 'a4' | 'letter' = 'fit'
 ): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
 
@@ -507,15 +508,45 @@ export async function convertImagesToPDF(
       embeddedImg = await pdfDoc.embedJpg(img.dataUrl);
     }
 
-    const { width, height } = embeddedImg.scale(1.0);
-    // Fit within a standard letter/A4 or use image natural size
-    const page = pdfDoc.addPage([width, height]);
-    page.drawImage(embeddedImg, {
-      x: 0,
-      y: 0,
-      width,
-      height,
-    });
+    const imgDims = embeddedImg.scale(1.0);
+
+    if (pageSize === 'a4') {
+      const pageW = 595.28;
+      const pageH = 841.89;
+      const margin = 20;
+      const maxW = pageW - margin * 2;
+      const maxH = pageH - margin * 2;
+      const ratio = Math.min(maxW / imgDims.width, maxH / imgDims.height);
+      const drawW = imgDims.width * ratio;
+      const drawH = imgDims.height * ratio;
+      const x = (pageW - drawW) / 2;
+      const y = (pageH - drawH) / 2;
+
+      const page = pdfDoc.addPage([pageW, pageH]);
+      page.drawImage(embeddedImg, { x, y, width: drawW, height: drawH });
+    } else if (pageSize === 'letter') {
+      const pageW = 612;
+      const pageH = 792;
+      const margin = 20;
+      const maxW = pageW - margin * 2;
+      const maxH = pageH - margin * 2;
+      const ratio = Math.min(maxW / imgDims.width, maxH / imgDims.height);
+      const drawW = imgDims.width * ratio;
+      const drawH = imgDims.height * ratio;
+      const x = (pageW - drawW) / 2;
+      const y = (pageH - drawH) / 2;
+
+      const page = pdfDoc.addPage([pageW, pageH]);
+      page.drawImage(embeddedImg, { x, y, width: drawW, height: drawH });
+    } else {
+      const page = pdfDoc.addPage([imgDims.width, imgDims.height]);
+      page.drawImage(embeddedImg, {
+        x: 0,
+        y: 0,
+        width: imgDims.width,
+        height: imgDims.height,
+      });
+    }
   }
 
   return await pdfDoc.save();

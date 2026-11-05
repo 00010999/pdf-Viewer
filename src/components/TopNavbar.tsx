@@ -21,6 +21,7 @@ import {
   Lock,
   Sun,
   Moon,
+  Camera,
 } from 'lucide-react';
 import { ViewMode, ZoomPreset } from '../types';
 
@@ -42,6 +43,7 @@ interface TopNavbarProps {
   onOpenEditModal: () => void;
   onOpenProperties: () => void;
   onOpenSettings: () => void;
+  onOpenScanner?: () => void;
   onExportPDF: () => void;
   onPrintPDF: () => void;
   onBackToDashboard: () => void;
@@ -72,6 +74,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onOpenEditModal,
   onOpenProperties,
   onOpenSettings,
+  onOpenScanner,
   onExportPDF,
   onPrintPDF,
   onBackToDashboard,
@@ -263,6 +266,17 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           <Edit3 size={13} className={showAnnotationBar ? 'text-blue-600' : 'text-zinc-500'} />
           <span className="hidden sm:inline">{showAnnotationBar ? 'Annotate: On' : 'Annotate: Off'}</span>
         </button>
+
+        {onOpenScanner && (
+          <button
+            onClick={onOpenScanner}
+            title="Scan Document with Camera"
+            className="flex items-center gap-1 px-2 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+          >
+            <Camera size={13} className="text-emerald-600 dark:text-emerald-400" />
+            <span className="hidden sm:inline">Scan</span>
+          </button>
+        )}
 
         <button
           onClick={onOpenEditModal}
