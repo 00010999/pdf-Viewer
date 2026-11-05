@@ -21,6 +21,7 @@ interface Window {
       fileBytes?: number[];
       fileSize?: number;
     } | null>;
+    setThemeSource?: (theme: string) => Promise<boolean>;
     isElectron: boolean;
   };
 }

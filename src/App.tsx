@@ -209,19 +209,46 @@ export function App() {
   // Sync theme
   useEffect(() => {
     const root = document.documentElement;
-    if (settings.theme === 'dark') {
-      root.classList.add('dark');
-    } else if (settings.theme === 'light') {
-      root.classList.remove('dark');
-    } else {
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    const body = document.body;
+
+    const applyTheme = () => {
+      let isDark = false;
+      if (settings.theme === 'dark') {
+        isDark = true;
+      } else if (settings.theme === 'light') {
+        isDark = false;
+      } else {
+        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+
+      if (isDark) {
         root.classList.add('dark');
+        body.classList.add('dark');
       } else {
         root.classList.remove('dark');
+        body.classList.remove('dark');
       }
-    }
+
+      // Sync native window titlebar in Electron desktop app
+      window.electronAPI?.setThemeSource?.(settings.theme);
+    };
+
+    applyTheme();
     saveSettings(settings);
+
+    if (settings.theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const listener = () => applyTheme();
+      mediaQuery.addEventListener('change', listener);
+      return () => mediaQuery.removeEventListener('change', listener);
+    }
   }, [settings]);
+
+  const handleToggleTheme = () => {
+    const isCurrentlyDark = document.documentElement.classList.contains('dark');
+    const newTheme: 'light' | 'dark' = isCurrentlyDark ? 'light' : 'dark';
+    setSettings((prev) => ({ ...prev, theme: newTheme }));
+  };
 
   // Generate page thumbnails in background when doc is loaded
   useEffect(() => {
@@ -791,6 +818,154 @@ export function App() {
     });
   };
 
+  const scaleRef = useRef(scale);
+  useEffect(() => {
+    scaleRef.current = scale;
+  }, [scale]);
+
+  // Touchpad pinch-to-zoom (PC) & Touch pinch-to-zoom (Mobile) Engine
+  useEffect(() => {
+    const container = viewerContainerRef.current;
+    if (!container || currentView !== 'viewer') return;
+
+    // --- 1. PC Trackpad 2-Finger Pinch & Ctrl+Wheel Zoom ---
+    const handleWheel = (e: WheelEvent) => {
+      // Touchpad pinch sends wheel event with e.ctrlKey = true in Chromium/Electron
+      if (e.ctrlKey) {
+        e.preventDefault();
+
+        const containerRect = container.getBoundingClientRect();
+        const mouseX = e.clientX - containerRect.left;
+        const mouseY = e.clientY - containerRect.top;
+
+        // Smooth zoom factor based on deltaY
+        const zoomDelta = -e.deltaY * 0.005;
+        const factor = Math.min(Math.max(Math.exp(zoomDelta), 0.75), 1.35);
+
+        setScale((prevScale) => {
+          const newScale = Math.min(Math.max(prevScale * factor, 0.35), 4.0);
+          if (Math.abs(newScale - prevScale) < 0.002) return prevScale;
+
+          // Focal-point zoom: Keep content under cursor stationary
+          const ratio = newScale / prevScale;
+          const targetScrollLeft = (container.scrollLeft + mouseX) * ratio - mouseX;
+          const targetScrollTop = (container.scrollTop + mouseY) * ratio - mouseY;
+
+          requestAnimationFrame(() => {
+            container.scrollLeft = targetScrollLeft;
+            container.scrollTop = targetScrollTop;
+          });
+
+          setZoomPreset(Math.round(newScale * 100) / 100);
+          return newScale;
+        });
+      }
+    };
+
+    // --- 2. Mobile & Touchscreen 2-Finger Pinch-to-Zoom ---
+    let isPinching = false;
+    let initialPinchDistance = 0;
+    let initialPinchScale = 1;
+    let initialScroll = { left: 0, top: 0 };
+    let initialCenter = { x: 0, y: 0 };
+    let touchAnimFrame: number | null = null;
+    let lastTapTime = 0;
+
+    const getDistance = (t1: Touch, t2: Touch) => {
+      return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    };
+
+    const getCenter = (t1: Touch, t2: Touch, rect: DOMRect) => {
+      return {
+        x: (t1.clientX + t2.clientX) / 2 - rect.left,
+        y: (t1.clientY + t2.clientY) / 2 - rect.top,
+      };
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        isPinching = true;
+        initialPinchDistance = getDistance(e.touches[0], e.touches[1]);
+        initialPinchScale = scaleRef.current;
+        initialScroll = { left: container.scrollLeft, top: container.scrollTop };
+        const rect = container.getBoundingClientRect();
+        initialCenter = getCenter(e.touches[0], e.touches[1], rect);
+      } else if (e.touches.length === 1) {
+        // Double-tap zoom toggle on mobile
+        const now = Date.now();
+        if (now - lastTapTime < 300) {
+          const tap = e.touches[0];
+          const rect = container.getBoundingClientRect();
+          const tapX = tap.clientX - rect.left;
+          const tapY = tap.clientY - rect.top;
+
+          setScale((prevScale) => {
+            const newScale = prevScale > 1.25 ? 0.95 : 1.85;
+            const ratio = newScale / prevScale;
+            container.scrollLeft = (container.scrollLeft + tapX) * ratio - tapX;
+            container.scrollTop = (container.scrollTop + tapY) * ratio - tapY;
+            setZoomPreset(newScale === 0.95 ? 'fit-width' : 1.85);
+            return newScale;
+          });
+          lastTapTime = 0;
+        } else {
+          lastTapTime = now;
+        }
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isPinching && e.touches.length === 2) {
+        e.preventDefault(); // Stop native browser/webview viewport zoom
+
+        const currentDist = getDistance(e.touches[0], e.touches[1]);
+        if (initialPinchDistance <= 15) return;
+
+        const factor = currentDist / initialPinchDistance;
+        const rect = container.getBoundingClientRect();
+        const currentCenter = getCenter(e.touches[0], e.touches[1], rect);
+
+        const newScale = Math.min(Math.max(initialPinchScale * factor, 0.35), 4.0);
+
+        if (touchAnimFrame) cancelAnimationFrame(touchAnimFrame);
+        touchAnimFrame = requestAnimationFrame(() => {
+          setScale(newScale);
+          setZoomPreset(Math.round(newScale * 100) / 100);
+
+          const ratio = newScale / initialPinchScale;
+          container.scrollLeft = (initialScroll.left + initialCenter.x) * ratio - currentCenter.x;
+          container.scrollTop = (initialScroll.top + initialCenter.y) * ratio - currentCenter.y;
+        });
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (isPinching && e.touches.length < 2) {
+        isPinching = false;
+        initialPinchDistance = 0;
+        if (touchAnimFrame) {
+          cancelAnimationFrame(touchAnimFrame);
+          touchAnimFrame = null;
+        }
+      }
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    container.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+      container.removeEventListener('touchcancel', handleTouchEnd);
+      if (touchAnimFrame) cancelAnimationFrame(touchAnimFrame);
+    };
+  }, [currentView]);
+
   return (
     <div className="w-screen h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 overflow-hidden font-sans select-none">
       {/* Hidden file inputs for user uploads */}
@@ -835,6 +1010,9 @@ export function App() {
           onChangeFilter={setDashboardFilter}
           searchQuery={dashboardSearch}
           onSearchChange={setDashboardSearch}
+          theme={settings.theme}
+          onToggleTheme={handleToggleTheme}
+          onOpenSettings={() => setShowSettingsModal(true)}
         />
       )}
 
@@ -878,6 +1056,8 @@ export function App() {
                 return !prev;
               });
             }}
+            theme={settings.theme}
+            onToggleTheme={handleToggleTheme}
           />
 
           {/* Main Viewer Body */}
@@ -910,7 +1090,8 @@ export function App() {
             {/* Document Pages Container */}
             <div
               ref={viewerContainerRef}
-              className="flex-1 h-full overflow-auto p-8 relative flex flex-col items-center bg-zinc-100/70 dark:bg-zinc-950"
+              className="flex-1 h-full overflow-auto p-4 md:p-8 relative flex flex-col items-center bg-zinc-100/70 dark:bg-zinc-950 overscroll-contain"
+              style={{ touchAction: 'pan-x pan-y' }}
             >
               {/* Floating Markup & Annotation Bar */}
               {!isReadingMode && showAnnotationBar && (

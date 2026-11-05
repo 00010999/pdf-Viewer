@@ -9,6 +9,9 @@ import {
   BookOpen,
   ArrowRight,
   HardDrive,
+  Sun,
+  Moon,
+  Sliders,
 } from 'lucide-react';
 import { RecentDocument } from '../types';
 
@@ -23,6 +26,9 @@ interface DashboardProps {
   onChangeFilter: (f: 'all' | 'favorites') => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
+  theme?: string;
+  onToggleTheme?: () => void;
+  onOpenSettings?: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -36,6 +42,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onChangeFilter,
   searchQuery,
   onSearchChange,
+  theme,
+  onToggleTheme,
+  onOpenSettings,
 }) => {
   const filteredDocs = recentDocs.filter((doc) => {
     if (activeFilter === 'favorites' && !doc.isFavorite) return false;
@@ -80,13 +89,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <p className="text-[11px] text-zinc-500">Universal Edition</p>
             </div>
           </div>
-          <button
-            onClick={onOpenFilePicker}
-            className="md:hidden flex items-center gap-1.5 py-1.5 px-3 bg-blue-600 text-white rounded-lg text-xs font-medium shadow-xs"
-          >
-            <Plus size={14} />
-            <span>Open PDF</span>
-          </button>
+          <div className="md:hidden flex items-center gap-1.5">
+            {onToggleTheme && (
+              <button
+                onClick={onToggleTheme}
+                title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+                className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+              </button>
+            )}
+            {onOpenSettings && (
+              <button
+                onClick={onOpenSettings}
+                title="Preferences"
+                className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                <Sliders size={15} />
+              </button>
+            )}
+            <button
+              onClick={onOpenFilePicker}
+              className="flex items-center gap-1.5 py-1.5 px-3 bg-blue-600 text-white rounded-lg text-xs font-medium shadow-xs"
+            >
+              <Plus size={14} />
+              <span>Open PDF</span>
+            </button>
+          </div>
         </div>
 
         {/* Primary Action Button (Desktop) */}
@@ -131,10 +160,32 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </button>
         </nav>
 
-        {/* Local Storage Status indicator */}
-        <div className="mt-auto pt-4 border-t border-zinc-200/80 dark:border-zinc-800/80 flex items-center gap-2 px-2 text-[11px] text-zinc-400">
-          <HardDrive size={13} />
-          <span>Local storage enabled</span>
+        {/* Local Storage Status & Actions */}
+        <div className="mt-auto pt-3 border-t border-zinc-200/80 dark:border-zinc-800/80 flex items-center justify-between px-2 text-[11px] text-zinc-400">
+          <div className="flex items-center gap-1.5">
+            <HardDrive size={13} />
+            <span>Local storage</span>
+          </div>
+          <div className="flex items-center gap-1">
+            {onToggleTheme && (
+              <button
+                onClick={onToggleTheme}
+                title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+                className="p-1 rounded-md text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+              </button>
+            )}
+            {onOpenSettings && (
+              <button
+                onClick={onOpenSettings}
+                title="Preferences"
+                className="p-1 rounded-md text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                <Sliders size={14} />
+              </button>
+            )}
+          </div>
         </div>
       </aside>
 

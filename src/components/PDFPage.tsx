@@ -324,6 +324,10 @@ export const PDFPage: React.FC<PDFPageProps> = ({
 
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (activeTool === 'select' || activeTool === 'hand') return;
+    if (!e.isPrimary) {
+      setIsDrawing(false);
+      return;
+    }
 
     const rect = e.currentTarget.getBoundingClientRect();
     const normX = (e.clientX - rect.left) / rect.width;
@@ -358,7 +362,7 @@ export const PDFPage: React.FC<PDFPageProps> = ({
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
+    if (!isDrawing || !e.isPrimary) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const normX = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     const normY = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));

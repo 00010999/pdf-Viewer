@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, nativeTheme } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -132,6 +132,17 @@ ipcMain.handle('dialog:savePDF', async (event, { defaultName, fileBase64, fileBy
     fs.writeFileSync(result.filePath, Buffer.from(fileBase64, 'base64'));
   } else if (fileBytes) {
     fs.writeFileSync(result.filePath, Buffer.from(fileBytes));
+  }
+  return true;
+});
+
+// IPC: Synchronize native OS window theme (Dark/Light/System)
+ipcMain.handle('theme:setThemeSource', async (event, theme) => {
+  if (['light', 'dark', 'system'].includes(theme)) {
+    nativeTheme.themeSource = theme;
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.setBackgroundColor(theme === 'dark' ? '#0c0d0e' : '#fbfbfb');
+    }
   }
   return true;
 });

@@ -57,9 +57,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: success()
         with:
-          tag_name: android-apk-v1.0
-          name: "Modern PDF Viewer - Android APK Download"
-          body: "Direct APK download for Android phones. Install on any Android device to read, annotate and edit PDFs offline."
+          tag_name: android-apk-v1.1
+          name: "Modern PDF Viewer v1.1 - Android APK Download"
+          body: "Direct APK download for Android phones. Features mobile 2-finger pinch-to-zoom, double-tap zoom, dark/light theme toggle, and 100% offline PDF reading and annotations."
           files: android/app/build/outputs/apk/debug/app-debug.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

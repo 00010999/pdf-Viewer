@@ -19,6 +19,8 @@ import {
   Layers,
   ArrowLeft,
   Lock,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { ViewMode, ZoomPreset } from '../types';
 
@@ -48,6 +50,8 @@ interface TopNavbarProps {
   onToggleReadingMode: () => void;
   showAnnotationBar: boolean;
   onToggleAnnotationBar: () => void;
+  theme?: string;
+  onToggleTheme?: () => void;
 }
 
 export const TopNavbar: React.FC<TopNavbarProps> = ({
@@ -76,6 +80,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onToggleReadingMode,
   showAnnotationBar,
   onToggleAnnotationBar,
+  theme,
+  onToggleTheme,
 }) => {
   return (
     <header className="h-12 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 px-3 flex items-center justify-between select-none z-30">
@@ -301,6 +307,16 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         >
           <Sliders size={15} />
         </button>
+
+        {onToggleTheme && (
+          <button
+            onClick={onToggleTheme}
+            title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+          >
+            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
+        )}
       </div>
     </header>
   );
