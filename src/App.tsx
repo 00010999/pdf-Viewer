@@ -52,6 +52,7 @@ import { DocumentPropertiesModal } from './components/DocumentPropertiesModal';
 import { SettingsModal } from './components/SettingsModal';
 import { ExportModal } from './components/ExportModal';
 import { DocumentScannerModal } from './components/DocumentScannerModal';
+import { Download } from 'lucide-react';
 
 export function App() {
   // App views
@@ -1192,6 +1193,18 @@ export function App() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Mobile Floating Action Save Button - Always visible on Android phones */}
+          <div className="md:hidden fixed bottom-6 right-6 z-40">
+            <button
+              onClick={handleSaveAnnotatedPDF}
+              title="Save & Download PDF"
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-xs rounded-full shadow-2xl transition-all active:scale-95 cursor-pointer border border-white/20"
+            >
+              <Download size={16} />
+              <span>Save PDF</span>
+            </button>
           </div>
         </div>
       )}

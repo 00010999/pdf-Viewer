@@ -396,16 +396,18 @@ export const DocumentScannerModal: React.FC<DocumentScannerModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            {pages.length > 0 && (
-              <button
-                onClick={handleSaveDocument}
-                disabled={isProcessing}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-xs font-medium shadow-xs transition-colors cursor-pointer disabled:opacity-50"
-              >
-                <Check size={14} />
-                <span>Save PDF</span>
-              </button>
-            )}
+            <button
+              onClick={handleSaveDocument}
+              disabled={isProcessing || pages.length === 0}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-colors shrink-0 ${
+                pages.length > 0
+                  ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white cursor-pointer'
+                  : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed opacity-60'
+              }`}
+            >
+              <Check size={14} />
+              <span>Save PDF</span>
+            </button>
             <button
               onClick={() => {
                 stopLiveCamera();
@@ -679,6 +681,15 @@ export const DocumentScannerModal: React.FC<DocumentScannerModalProps> = ({
               >
                 <ImageIcon size={14} />
                 <span>+ Gallery</span>
+              </button>
+
+              <button
+                onClick={handleSaveDocument}
+                disabled={isProcessing}
+                className="ml-auto flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-xs rounded-xl shadow-md transition-all cursor-pointer shrink-0 active:scale-95"
+              >
+                <Check size={15} />
+                <span>Save PDF ({pages.length})</span>
               </button>
             </div>
           </div>

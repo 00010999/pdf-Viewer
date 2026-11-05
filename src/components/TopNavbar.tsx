@@ -239,7 +239,41 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
       </div>
 
       {/* Right: Actions, Edit Tools, Print, Save, Fullscreen */}
-      <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+        {/* Primary Save Button - Always visible, never clipped, always with text label */}
+        <button
+          onClick={onSavePDF || onExportPDF}
+          title="Save & Download PDF"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-xs font-semibold transition-colors shadow-xs cursor-pointer shrink-0"
+        >
+          <Download size={14} />
+          <span>Save</span>
+        </button>
+
+        {onOpenScanner && (
+          <button
+            onClick={onOpenScanner}
+            title="Scan Document with Camera"
+            className="flex items-center gap-1 px-2 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 rounded-lg text-xs font-medium transition-colors cursor-pointer shrink-0"
+          >
+            <Camera size={13} className="text-emerald-600 dark:text-emerald-400" />
+            <span className="hidden sm:inline">Scan</span>
+          </button>
+        )}
+
+        <button
+          onClick={onToggleAnnotationBar}
+          title={showAnnotationBar ? "Hide Annotation Toolbar" : "Show Annotation Toolbar"}
+          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer shrink-0 ${
+            showAnnotationBar
+              ? 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50'
+              : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
+          }`}
+        >
+          <Edit3 size={13} className={showAnnotationBar ? 'text-blue-600' : 'text-zinc-500'} />
+          <span className="hidden sm:inline">Annotate</span>
+        </button>
+
         <button
           onClick={onToggleSearch}
           title="Search Document (Ctrl+F)"
@@ -247,38 +281,6 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         >
           <Search size={15} />
         </button>
-
-        <button
-          onClick={onRotateDocument}
-          title="Rotate Pages Clockwise"
-          className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer hidden sm:block"
-        >
-          <RotateCw size={15} />
-        </button>
-
-        <button
-          onClick={onToggleAnnotationBar}
-          title={showAnnotationBar ? "Hide Annotation Toolbar" : "Show Annotation Toolbar"}
-          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-            showAnnotationBar
-              ? 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50'
-              : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
-          }`}
-        >
-          <Edit3 size={13} className={showAnnotationBar ? 'text-blue-600' : 'text-zinc-500'} />
-          <span className="hidden sm:inline">{showAnnotationBar ? 'Annotate: On' : 'Annotate: Off'}</span>
-        </button>
-
-        {onOpenScanner && (
-          <button
-            onClick={onOpenScanner}
-            title="Scan Document with Camera"
-            className="flex items-center gap-1 px-2 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-          >
-            <Camera size={13} className="text-emerald-600 dark:text-emerald-400" />
-            <span className="hidden sm:inline">Scan</span>
-          </button>
-        )}
 
         <button
           onClick={onOpenEditModal}
@@ -290,28 +292,27 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         </button>
 
         <button
-          onClick={onPrintPDF}
-          title="Print Document"
-          className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer hidden lg:block"
-        >
-          <Printer size={15} />
-        </button>
-
-        <button
-          onClick={onSavePDF || onExportPDF}
-          title="Save & Download PDF"
-          className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-xs font-medium transition-colors shadow-2xs cursor-pointer"
-        >
-          <Download size={13} />
-          <span className="hidden sm:inline">Save</span>
-        </button>
-
-        <button
           onClick={onExportPDF}
           title="More Export Options (Images, Compression, Split)"
           className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer hidden sm:block"
         >
           <Share2 size={14} />
+        </button>
+
+        <button
+          onClick={onRotateDocument}
+          title="Rotate Pages Clockwise"
+          className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer hidden sm:block"
+        >
+          <RotateCw size={15} />
+        </button>
+
+        <button
+          onClick={onPrintPDF}
+          title="Print Document"
+          className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer hidden lg:block"
+        >
+          <Printer size={15} />
         </button>
 
         <div className="w-[1px] h-4 bg-zinc-200 dark:bg-zinc-800 mx-1 hidden sm:block" />
