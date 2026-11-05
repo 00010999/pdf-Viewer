@@ -44,6 +44,7 @@ interface TopNavbarProps {
   onOpenProperties: () => void;
   onOpenSettings: () => void;
   onOpenScanner?: () => void;
+  onSavePDF?: () => void;
   onExportPDF: () => void;
   onPrintPDF: () => void;
   onBackToDashboard: () => void;
@@ -75,6 +76,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onOpenProperties,
   onOpenSettings,
   onOpenScanner,
+  onSavePDF,
   onExportPDF,
   onPrintPDF,
   onBackToDashboard,
@@ -296,12 +298,20 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         </button>
 
         <button
-          onClick={onExportPDF}
-          title="Export / Download with Annotations"
-          className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors shadow-2xs cursor-pointer"
+          onClick={onSavePDF || onExportPDF}
+          title="Save & Download PDF"
+          className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-xs font-medium transition-colors shadow-2xs cursor-pointer"
         >
           <Download size={13} />
           <span className="hidden sm:inline">Save</span>
+        </button>
+
+        <button
+          onClick={onExportPDF}
+          title="More Export Options (Images, Compression, Split)"
+          className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer hidden sm:block"
+        >
+          <Share2 size={14} />
         </button>
 
         <div className="w-[1px] h-4 bg-zinc-200 dark:bg-zinc-800 mx-1 hidden sm:block" />

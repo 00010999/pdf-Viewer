@@ -40,6 +40,7 @@ import {
   removeRecentDoc,
   addOrUpdateRecentDoc,
 } from './services/storageService';
+import { saveOrExportPDF } from './services/fileSaveService';
 
 import { Dashboard } from './components/Dashboard';
 import { TopNavbar } from './components/TopNavbar';
@@ -625,24 +626,16 @@ export function App() {
     setIsLoading(true);
     try {
       const bakedBytes = await bakeAnnotationsIntoPDF(rawPdfBytes, annotations);
-      const targetName = fileName.replace('.pdf', '_edited.pdf');
+      const targetName = fileName.toLowerCase().endsWith('.pdf')
+        ? fileName.replace(/\.pdf$/i, '_edited.pdf')
+        : `${fileName}_edited.pdf`;
 
-      if (window.electronAPI?.savePDFDialog) {
-        const saved = await window.electronAPI.savePDFDialog({
-          defaultName: targetName,
-          fileBytes: Array.from(bakedBytes),
-        });
-        if (saved) {
-          setShowExportModal(false);
-          setIsLoading(false);
-          return;
-        }
+      const result = await saveOrExportPDF(bakedBytes, targetName);
+      if (result.success) {
+        // Also update local storage cache so edits persist
+        storePDFData(currentDocId, bakedBytes);
+        setRawPdfBytes(bakedBytes);
       }
-
-      downloadBlob(
-        new Blob([bakedBytes as any], { type: 'application/pdf' }),
-        targetName
-      );
       setShowExportModal(false);
     } catch (e) {
       console.error(e);
@@ -702,8 +695,13 @@ export function App() {
     const a = document.createElement('a');
     a.href = url;
     a.download = name;
+    a.style.display = 'none';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 30000);
   };
 
   // Zoom preset handling
@@ -1048,6 +1046,7 @@ export function App() {
             onOpenProperties={() => setShowPropertiesModal(true)}
             onOpenSettings={() => setShowSettingsModal(true)}
             onOpenScanner={() => setShowScannerModal(true)}
+            onSavePDF={handleSaveAnnotatedPDF}
             onExportPDF={() => setShowExportModal(true)}
             onPrintPDF={handlePrint}
             onBackToDashboard={() => setCurrentView('dashboard')}
@@ -1255,8 +1254,9 @@ export function App() {
         <DocumentScannerModal
           isOpen={showScannerModal}
           onClose={() => setShowScannerModal(false)}
-          onSavePDF={(pdfBytes, scannedName) => {
+          onSavePDF={async (pdfBytes, scannedName) => {
             setShowScannerModal(false);
+            await saveOrExportPDF(pdfBytes, scannedName);
             handleLoadPDFBytes(pdfBytes, scannedName);
           }}
         />

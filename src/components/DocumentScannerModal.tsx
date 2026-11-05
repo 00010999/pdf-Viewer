@@ -16,6 +16,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { convertImagesToPDF } from '../services/pdfEditService';
+import { saveOrExportPDF } from '../services/fileSaveService';
 
 interface ScannedPage {
   id: string;
@@ -318,6 +319,9 @@ export const DocumentScannerModal: React.FC<DocumentScannerModalProps> = ({
         : 'Scanned_Document.pdf';
 
       stopLiveCamera();
+      // Directly save / download / export the PDF to mobile storage / PC disk
+      await saveOrExportPDF(pdfBytes, safeName);
+      // Load into viewer for immediate viewing & annotating
       onSavePDF(pdfBytes, safeName);
       onClose();
     } catch (err) {
