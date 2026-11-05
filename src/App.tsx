@@ -114,10 +114,13 @@ export function App() {
   // Load PDF buffer into engine
   const handleLoadPDFBytes = useCallback(
     async (bytes: Uint8Array, name: string, docId?: string) => {
+      console.log('handleLoadPDFBytes started for:', name, 'length:', bytes?.length);
       setIsLoading(true);
       try {
         const id = docId || `doc-${Date.now()}`;
+        console.log('Step 1: Calling loadPDFDocument...');
         const loadRes = await loadPDFDocument(bytes);
+        console.log('Step 2: loadPDFDocument returned, pages:', loadRes.totalPages);
 
         setRawPdfBytes(bytes);
         setPdfDoc(loadRes.pdfDoc);
@@ -132,18 +135,18 @@ export function App() {
         setUndoStack([]);
         setRedoStack([]);
 
-        // Cache binary locally in IndexedDB
+        console.log('Step 3: Storing in IndexedDB...');
         await storePDFData(id, bytes);
 
-        // Generate first page thumbnail for dashboard
+        console.log('Step 4: Generating thumbnail...');
         let thumbUrl = '';
         try {
           thumbUrl = await renderPageThumbnail(loadRes.pdfDoc, 1, 0.35);
-        } catch {
-          // ignore
+        } catch (te) {
+          console.warn('Thumbnail generation failed:', te);
         }
 
-        // Add to recent docs
+        console.log('Step 5: Adding to recent docs...');
         const updated = addOrUpdateRecentDoc({
           id,
           name,
@@ -154,12 +157,11 @@ export function App() {
         });
         setRecentDocs(updated);
 
-        // Generate thumbnails lazily
         const initialThumbs: { [p: number]: string } = {};
         if (thumbUrl) initialThumbs[1] = thumbUrl;
         setThumbnails(initialThumbs);
 
-        // Calculate full word counts in background
+        console.log('Step 6: Calculating stats...');
         calculateDocumentStats(loadRes.pdfDoc).then((stats) => {
           setMetadata((prev) => ({
             ...prev,
@@ -168,10 +170,11 @@ export function App() {
           }));
         });
 
+        console.log('Step 7: Switching view to viewer...');
         setCurrentView('viewer');
-      } catch (err) {
-        console.error('Failed to load PDF', err);
-        alert('Could not render this PDF document. Please check if the file is corrupted.');
+      } catch (err: any) {
+        console.error('Failed to load PDF:', err?.stack || err);
+        alert('Could not render this PDF document: ' + (err?.message || err));
       } finally {
         setIsLoading(false);
       }

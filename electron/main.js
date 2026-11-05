@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu, nativeTheme } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, nativeTheme, session } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -147,7 +147,16 @@ ipcMain.handle('theme:setThemeSource', async (event, theme) => {
   return true;
 });
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  if (session && session.defaultSession) {
+    try {
+      await session.defaultSession.clearStorageData({
+        storages: ['serviceworkers']
+      });
+    } catch (e) {
+      // ignore
+    }
+  }
   createWindow();
 
   app.on('activate', () => {
