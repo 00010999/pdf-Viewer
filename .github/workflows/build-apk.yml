@@ -40,26 +40,7 @@ jobs:
         run: |
           npx cap add android
           npx cap sync android
-
-          # 1. Create file_paths.xml for FileProvider to allow sharing/saving PDFs anywhere
-          mkdir -p android/app/src/main/res/xml
-          cat << 'EOF' > android/app/src/main/res/xml/file_paths.xml
-<?xml version="1.0" encoding="utf-8"?>
-<paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <files-path name="files" path="." />
-    <cache-path name="cache" path="." />
-    <external-files-path name="external_files" path="." />
-    <external-cache-path name="external_cache" path="." />
-    <external-path name="external" path="." />
-</paths>
-EOF
-
-          # 2. Add FileProvider inside <application>
-          sed -i 's/<application/<application android:requestLegacyExternalStorage="true"/' android/app/src/main/AndroidManifest.xml
-          sed -i '/<\/application>/i \        <provider\n            android:name="androidx.core.content.FileProvider"\n            android:authorities="${applicationId}.fileprovider"\n            android:exported="false"\n            android:grantUriPermissions="true">\n            <meta-data\n                android:name="android.support.FILE_PROVIDER_PATHS"\n                android:resource="@xml/file_paths" \/>\n        <\/provider>' android/app/src/main/AndroidManifest.xml
-
-          # 3. Add Permissions before </manifest>
-          sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />\n    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />' android/app/src/main/AndroidManifest.xml
+          node scripts/patch-android.cjs
 
       - name: Build Debug APK with Gradle
         working-directory: android
