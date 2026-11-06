@@ -122,7 +122,6 @@ export const DocumentScannerModal: React.FC<DocumentScannerModalProps> = ({
   ): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
-      img.crossOrigin = 'anonymous';
       img.onload = () => {
         try {
           const canvas = document.createElement('canvas');
@@ -428,13 +427,13 @@ export const DocumentScannerModal: React.FC<DocumentScannerModalProps> = ({
               onClick={handleSaveDocument}
               disabled={isProcessing || pages.length === 0}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-colors shrink-0 ${
-                pages.length > 0
+                pages.length > 0 && !isProcessing
                   ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white cursor-pointer'
                   : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed opacity-60'
               }`}
             >
               <Check size={14} />
-              <span>Save PDF</span>
+              <span>{isProcessing ? 'Saving PDF...' : 'Save PDF'}</span>
             </button>
             <button
               onClick={() => {
@@ -714,10 +713,14 @@ export const DocumentScannerModal: React.FC<DocumentScannerModalProps> = ({
               <button
                 onClick={handleSaveDocument}
                 disabled={isProcessing}
-                className="ml-auto flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-xs rounded-xl shadow-md transition-all cursor-pointer shrink-0 active:scale-95"
+                className={`ml-auto flex items-center gap-1.5 px-4 py-2 text-white font-semibold text-xs rounded-xl shadow-md transition-all shrink-0 ${
+                  isProcessing
+                    ? 'bg-blue-400 cursor-not-allowed opacity-80'
+                    : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 cursor-pointer active:scale-95'
+                }`}
               >
                 <Check size={15} />
-                <span>Save PDF ({pages.length})</span>
+                <span>{isProcessing ? 'Saving PDF...' : `Save PDF (${pages.length})`}</span>
               </button>
             </div>
           </div>

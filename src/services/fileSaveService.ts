@@ -118,8 +118,21 @@ export async function saveOrExportPDF(
           ) {
             return { success: true, method: 'share_canceled' };
           }
-          console.warn('Native Share failed after file write:', shareErr);
-          // File was successfully written to disk anyway
+          console.warn('Native Share failed after file write, attempting web share fallback:', shareErr);
+          try {
+            const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
+            const file = new File([blob], safeName, { type: 'application/pdf' });
+            if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: safeName,
+              });
+              return { success: true, method: 'web_share_fallback' };
+            }
+          } catch (webShareErr) {
+            console.warn('Web share fallback failed:', webShareErr);
+          }
+          // File was written to local storage
           return { success: true, method: 'capacitor_file_written', path: fileToShare };
         }
       }
