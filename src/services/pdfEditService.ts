@@ -502,10 +502,18 @@ export async function convertImagesToPDF(
 
   for (const img of images) {
     let embeddedImg;
-    if (img.dataUrl.startsWith('data:image/png')) {
-      embeddedImg = await pdfDoc.embedPng(img.dataUrl);
-    } else {
-      embeddedImg = await pdfDoc.embedJpg(img.dataUrl);
+    try {
+      if (img.dataUrl.startsWith('data:image/png')) {
+        embeddedImg = await pdfDoc.embedPng(img.dataUrl);
+      } else {
+        embeddedImg = await pdfDoc.embedJpg(img.dataUrl);
+      }
+    } catch {
+      try {
+        embeddedImg = await pdfDoc.embedPng(img.dataUrl);
+      } catch {
+        embeddedImg = await pdfDoc.embedJpg(img.dataUrl);
+      }
     }
 
     const imgDims = embeddedImg.scale(1.0);

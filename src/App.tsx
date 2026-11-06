@@ -770,6 +770,54 @@ export function App() {
     }
   };
 
+  // Dynamically update currentPage indicator as the user scrolls in continuous mode
+  useEffect(() => {
+    if (viewMode !== 'continuous' || currentView !== 'viewer' || !viewerContainerRef.current) return;
+    const container = viewerContainerRef.current;
+
+    const handleScroll = () => {
+      const containerRect = container.getBoundingClientRect();
+      const targetY = containerRect.top + containerRect.height / 3;
+
+      const pageNodes = container.querySelectorAll<HTMLElement>('[data-page-number]');
+      let closestPage = currentPage;
+      let minDiff = Infinity;
+
+      pageNodes.forEach((node) => {
+        const rect = node.getBoundingClientRect();
+        const pageMiddle = (rect.top + rect.bottom) / 2;
+        const diff = Math.abs(pageMiddle - targetY);
+        if (diff < minDiff) {
+          minDiff = diff;
+          const num = parseInt(node.getAttribute('data-page-number') || '1', 10);
+          if (num) closestPage = num;
+        }
+      });
+
+      if (closestPage !== currentPage) {
+        setCurrentPage(closestPage);
+        if (currentDocId) {
+          addOrUpdateRecentDoc({ id: currentDocId, name: fileName, lastPage: closestPage });
+        }
+      }
+    };
+
+    let rafId: number | null = null;
+    const onScroll = () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        handleScroll();
+        rafId = null;
+      });
+    };
+
+    container.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      container.removeEventListener('scroll', onScroll);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
+  }, [viewMode, currentView, totalPages, currentPage, currentDocId, fileName]);
+
   // Keyboard navigation & Shortcuts
   useEffect(() => {
     if (!settings.enableKeyboardShortcuts || currentView !== 'viewer') return;
@@ -1278,10 +1326,6 @@ export function App() {
           onSavePDF={async (pdfBytes, scannedName) => {
             setShowScannerModal(false);
             await handleLoadPDFBytes(pdfBytes, scannedName);
-            const result = await saveOrExportPDF(pdfBytes, scannedName);
-            if (result.success && result.method !== 'share_canceled') {
-              alert(`✅ "${scannedName}" saved successfully!`);
-            }
           }}
         />
       )}

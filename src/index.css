@@ -75,21 +75,31 @@
   forced-color-adjust: none;
   transform-origin: 0 0;
   z-index: 2;
+  user-select: text !important;
+  -webkit-user-select: text !important;
   pointer-events: auto;
 }
 
 .textLayer span,
 .textLayer br {
-  color: transparent;
+  color: transparent !important;
   position: absolute;
   white-space: pre;
   cursor: text;
   transform-origin: 0% 0%;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  pointer-events: auto;
 }
 
 .textLayer ::selection {
-  background: rgba(59, 130, 246, 0.35);
-  color: transparent;
+  background: rgba(59, 130, 246, 0.4) !important;
+  color: transparent !important;
+}
+
+.textLayer ::-moz-selection {
+  background: rgba(59, 130, 246, 0.4) !important;
+  color: transparent !important;
 }
 
 /* Search match highlighting */

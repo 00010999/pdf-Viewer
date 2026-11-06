@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { Annotation, ToolMode } from '../types';
+import { pdfjsLib } from '../services/pdfWorker';
 
 interface PDFPageProps {
   pdfDoc: any;
@@ -116,24 +117,37 @@ export const PDFPage: React.FC<PDFPageProps> = ({
           textLayerRef.current.style.width = `${Math.floor(viewport.width)}px`;
           textLayerRef.current.style.height = `${Math.floor(viewport.height)}px`;
 
-          const textContent = await page.getTextContent();
-          if (cancelRender || !textLayerRef.current) return;
+          try {
+            const textContent = await page.getTextContent();
+            if (cancelRender || !textLayerRef.current) return;
 
-          textContent.items.forEach((item: any) => {
-            const span = document.createElement('span');
-            span.textContent = item.str;
+            if (typeof (pdfjsLib as any).renderTextLayer === 'function') {
+              const textTask = (pdfjsLib as any).renderTextLayer({
+                textContentSource: textContent,
+                container: textLayerRef.current,
+                viewport,
+              });
+              await textTask.promise;
+            } else {
+              textContent.items.forEach((item: any) => {
+                const span = document.createElement('span');
+                span.textContent = item.str;
 
-            const tx = item.transform;
-            if (tx) {
-              const x = tx[4] * scale;
-              const y = viewport.height - tx[5] * scale;
-              span.style.left = `${x}px`;
-              span.style.top = `${y - (item.height || 12) * scale}px`;
-              span.style.fontSize = `${(item.height || 12) * scale}px`;
-              span.style.fontFamily = item.fontName || 'sans-serif';
+                const tx = item.transform;
+                if (tx) {
+                  const x = tx[4] * scale;
+                  const y = viewport.height - tx[5] * scale;
+                  span.style.left = `${x}px`;
+                  span.style.top = `${y - (item.height || 12) * scale}px`;
+                  span.style.fontSize = `${(item.height || 12) * scale}px`;
+                  span.style.fontFamily = item.fontName || 'sans-serif';
+                }
+                textLayerRef.current?.appendChild(span);
+              });
             }
-            textLayerRef.current?.appendChild(span);
-          });
+          } catch (te) {
+            console.warn('Text layer render info', te);
+          }
         }
       } catch (err: any) {
         if (err.name !== 'RenderingCancelledException') {
@@ -455,9 +469,10 @@ export const PDFPage: React.FC<PDFPageProps> = ({
     <div
       ref={containerRef}
       id={`pdf-page-${pageNumber}`}
-      className={`relative mb-6 mx-auto bg-white transition-all select-none ${
-        isCurrentPage ? 'ring-1 ring-blue-500/40' : ''
-      }`}
+      data-page-number={pageNumber}
+      className={`relative mb-6 mx-auto bg-white transition-all ${
+        activeTool === 'select' ? 'select-text' : 'select-none'
+      } ${isCurrentPage ? 'ring-1 ring-blue-500/40' : ''}`}
       style={{
         width: pageDimensions.width,
         height: pageDimensions.height,

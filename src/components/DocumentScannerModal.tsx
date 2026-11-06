@@ -114,7 +114,7 @@ export const DocumentScannerModal: React.FC<DocumentScannerModalProps> = ({
     }
   };
 
-  // Image filter processor using HTML5 Canvas
+  // Image filter processor using HTML5 Canvas with memory-safe downscaling
   const processImageFilter = (
     imageSrc: string,
     filter: 'original' | 'color' | 'grayscale' | 'bw',
@@ -124,55 +124,78 @@ export const DocumentScannerModal: React.FC<DocumentScannerModalProps> = ({
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return resolve(imageSrc);
+        try {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return resolve(imageSrc);
 
-        const isRotated = rotation % 180 !== 0;
-        canvas.width = isRotated ? img.height : img.width;
-        canvas.height = isRotated ? img.width : img.height;
-
-        ctx.save();
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate((rotation * Math.PI) / 180);
-        ctx.drawImage(img, -img.width / 2, -img.height / 2);
-        ctx.restore();
-
-        if (filter === 'original') {
-          resolve(canvas.toDataURL('image/jpeg', 0.92));
-          return;
-        }
-
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const d = imgData.data;
-
-        for (let i = 0; i < d.length; i += 4) {
-          const r = d[i];
-          const g = d[i + 1];
-          const b = d[i + 2];
-          const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-
-          if (filter === 'bw') {
-            // Adobe Scan high-contrast text threshold
-            const val = lum < 140 ? Math.max(0, lum * 0.5) : 255;
-            d[i] = val;
-            d[i + 1] = val;
-            d[i + 2] = val;
-          } else if (filter === 'grayscale') {
-            d[i] = lum;
-            d[i + 1] = lum;
-            d[i + 2] = lum;
-          } else if (filter === 'color') {
-            // Document color enhance: boost contrast and brighten background
-            const factor = 1.25;
-            d[i] = Math.min(255, Math.max(0, factor * (r - 128) + 128 + 15));
-            d[i + 1] = Math.min(255, Math.max(0, factor * (g - 128) + 128 + 15));
-            d[i + 2] = Math.min(255, Math.max(0, factor * (b - 128) + 128 + 15));
+          // Cap max dimension to 1600px for crisp 300DPI document output without WebView memory exhaustion
+          const maxDim = 1600;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
           }
-        }
 
-        ctx.putImageData(imgData, 0, 0);
-        resolve(canvas.toDataURL('image/jpeg', 0.92));
+          const isRotated = rotation % 180 !== 0;
+          canvas.width = isRotated ? h : w;
+          canvas.height = isRotated ? w : h;
+
+          ctx.save();
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          ctx.rotate((rotation * Math.PI) / 180);
+          ctx.drawImage(img, -w / 2, -h / 2, w, h);
+          ctx.restore();
+
+          if (filter === 'original') {
+            resolve(canvas.toDataURL('image/jpeg', 0.88));
+            return;
+          }
+
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const d = imgData.data;
+
+          for (let i = 0; i < d.length; i += 4) {
+            const r = d[i];
+            const g = d[i + 1];
+            const b = d[i + 2];
+            const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+
+            if (filter === 'bw') {
+              // Adobe Scan high-contrast text threshold
+              const val = lum < 140 ? Math.max(0, lum * 0.5) : 255;
+              d[i] = val;
+              d[i + 1] = val;
+              d[i + 2] = val;
+            } else if (filter === 'grayscale') {
+              d[i] = lum;
+              d[i + 1] = lum;
+              d[i + 2] = lum;
+            } else if (filter === 'color') {
+              // Document color enhance: boost contrast and brighten background
+              const factor = 1.25;
+              d[i] = Math.min(255, Math.max(0, factor * (r - 128) + 128 + 15));
+              d[i + 1] = Math.min(255, Math.max(0, factor * (g - 128) + 128 + 15));
+              d[i + 2] = Math.min(255, Math.max(0, factor * (b - 128) + 128 + 15));
+            }
+          }
+
+          ctx.putImageData(imgData, 0, 0);
+          resolve(canvas.toDataURL('image/jpeg', 0.88));
+        } catch (canvasErr) {
+          console.warn('Canvas filter error, returning original image:', canvasErr);
+          resolve(imageSrc);
+        }
+      };
+      img.onerror = () => {
+        console.warn('Failed to load image for filter processing');
+        resolve(imageSrc);
       };
       img.src = imageSrc;
     });
@@ -319,12 +342,19 @@ export const DocumentScannerModal: React.FC<DocumentScannerModalProps> = ({
         : 'Scanned_Document.pdf';
 
       stopLiveCamera();
-      // Pass to parent handler which saves to device and loads into viewer
+
+      // Directly trigger universal save/export to phone or desktop
+      const saveRes = await saveOrExportPDF(pdfBytes, safeName);
+      if (saveRes.success && saveRes.method !== 'share_canceled') {
+        alert(`✅ "${safeName}" saved successfully!`);
+      }
+
+      // Load document into the modern PDF viewer
       onSavePDF(pdfBytes, safeName);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed creating scanned PDF:', err);
-      alert('Error creating PDF document from scanned pages.');
+      alert('Error creating or saving PDF document: ' + (err?.message || 'Unknown error'));
     } finally {
       setIsProcessing(false);
     }
