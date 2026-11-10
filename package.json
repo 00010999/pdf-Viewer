@@ -25,6 +25,7 @@
     "appId": "com.modernpdf.app",
     "productName": "Modern PDF Viewer",
     "executableName": "modern-pdf-viewer",
+    "npmRebuild": false,
     "directories": {
       "output": "release"
     },

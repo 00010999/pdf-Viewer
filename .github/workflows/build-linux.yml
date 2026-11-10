@@ -25,7 +25,7 @@ jobs:
       - name: Install System Dependencies for AppImage & Deb
         run: |
           sudo apt-get update
-          sudo apt-get install -y libarchive-tools desktop-file-utils libfuse2t64 || sudo apt-get install -y libarchive-tools desktop-file-utils libfuse2 || true
+          sudo apt-get install -y libarchive-tools desktop-file-utils
 
       - name: Install Dependencies
         run: npm install
@@ -37,7 +37,7 @@ jobs:
         env:
           APPIMAGE_EXTRACT_AND_RUN: 1
         run: |
-          npx electron-builder --linux AppImage deb tar.gz --publish never
+          npx electron-builder --linux --publish never
 
       - name: Stage Linux Artifacts
         run: |
@@ -63,7 +63,7 @@ jobs:
             ### Modern PDF Viewer for Linux (x86_64 / amd64)
             
             - **AppImage**: Standalone, portable universal executable for all Linux distributions (Ubuntu, Fedora, Arch, Debian, openSUSE, Manjaro, Linux Mint, etc.).
-              - Run with: `chmod +x Modern-PDF-Viewer-*.AppImage && ./Modern-PDF-Viewer-*.AppImage`
+              - Run with: `chmod +x modern-pdf-viewer-*.AppImage && ./modern-pdf-viewer-*.AppImage`
             - **.deb Package**: Native Debian/Ubuntu/Mint installer package.
               - Install with: `sudo apt install ./modern-pdf-viewer_*.deb` or `sudo dpkg -i modern-pdf-viewer_*.deb`
             - **tar.gz**: Portable archive of the standalone Linux binaries.
