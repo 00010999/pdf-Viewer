@@ -34,7 +34,7 @@ jobs:
         run: npm run build
 
       - name: Build Linux Binaries (AppImage, DEB, tar.gz)
-        run: npx electron-builder --linux AppImage deb tar.gz
+        run: npx electron-builder --linux
 
       - name: List Generated Linux Packages
         run: ls -la release/

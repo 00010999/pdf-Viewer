@@ -3,6 +3,10 @@
   "private": true,
   "version": "1.0.0",
   "description": "Modern PDF Viewer - Desktop Application",
+  "author": {
+    "name": "Modern PDF Viewer",
+    "email": "modernpdf@app.com"
+  },
   "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
@@ -40,7 +44,7 @@
         "tar.gz"
       ],
       "category": "Office",
-      "maintainer": "Modern PDF Viewer",
+      "maintainer": "Modern PDF Viewer <modernpdf@app.com>",
       "synopsis": "Modern, fast, offline PDF viewer and editor",
       "description": "Modern PDF Viewer - fast, offline, privacy-first PDF viewer and editor with annotations and document scan support.",
       "desktop": {
