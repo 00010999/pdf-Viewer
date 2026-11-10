@@ -34,7 +34,7 @@ jobs:
         run: npm run build
 
       - name: Build Linux Binaries (AppImage, DEB, tar.gz)
-        run: npx electron-builder --linux
+        run: npx electron-builder --linux --publish never 2>&1 | tee build.log
 
       - name: List Generated Linux Packages
         run: ls -la release/

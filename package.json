@@ -47,11 +47,15 @@
       "maintainer": "Modern PDF Viewer <modernpdf@app.com>",
       "synopsis": "Modern, fast, offline PDF viewer and editor",
       "description": "Modern PDF Viewer - fast, offline, privacy-first PDF viewer and editor with annotations and document scan support.",
+      "mimeTypes": [
+        "application/pdf"
+      ],
       "desktop": {
-        "Name": "Modern PDF Viewer",
-        "Comment": "Fast offline PDF viewer and editor",
-        "Keywords": "pdf;reader;viewer;editor;scan;annotate;",
-        "MimeType": "application/pdf;"
+        "entry": {
+          "Name": "Modern PDF Viewer",
+          "Comment": "Fast offline PDF viewer and editor",
+          "Keywords": "pdf;reader;viewer;editor;scan;annotate;"
+        }
       }
     }
   },
