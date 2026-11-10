@@ -12,7 +12,10 @@
     "start": "electron .",
     "app": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "dist": "npm run build && electron-builder --win --dir",
-    "package": "npm run build && electron-builder --win nsis"
+    "package": "npm run build && electron-builder --win nsis",
+    "package:win": "npm run build && electron-builder --win nsis",
+    "package:linux": "npm run build && electron-builder --linux AppImage deb tar.gz",
+    "package:linux:dir": "npm run build && electron-builder --linux --dir"
   },
   "build": {
     "appId": "com.modernpdf.app",
@@ -26,8 +29,26 @@
       "public/**/*",
       "node_modules/**/*"
     ],
+    "icon": "public/icon-512.png",
     "win": {
       "target": "nsis"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "tar.gz"
+      ],
+      "category": "Office",
+      "maintainer": "Modern PDF Viewer",
+      "synopsis": "Modern, fast, offline PDF viewer and editor",
+      "description": "Modern PDF Viewer - fast, offline, privacy-first PDF viewer and editor with annotations and document scan support.",
+      "desktop": {
+        "Name": "Modern PDF Viewer",
+        "Comment": "Fast offline PDF viewer and editor",
+        "Keywords": "pdf;reader;viewer;editor;scan;annotate;",
+        "MimeType": "application/pdf;"
+      }
     }
   },
   "dependencies": {

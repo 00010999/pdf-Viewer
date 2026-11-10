@@ -1,0 +1,78 @@
+name: Build Linux Desktop Packages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install System Dependencies for AppImage & Deb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools desktop-file-utils
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Web Application
+        run: npm run build
+
+      - name: Build Linux Binaries (AppImage, DEB, tar.gz)
+        run: npx electron-builder --linux AppImage deb tar.gz
+
+      - name: List Generated Linux Packages
+        run: ls -la release/
+
+      - name: Upload Linux Packages as Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Modern-PDF-Viewer-Linux
+          path: |
+            release/*.AppImage
+            release/*.deb
+            release/*.tar.gz
+
+      - name: Publish Linux Packages to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        if: success()
+        with:
+          tag_name: linux-v1.0
+          name: "Modern PDF Viewer v1.0 - Linux (AppImage & DEB)"
+          body: |
+            ### Modern PDF Viewer for Linux (x86_64 / amd64)
+            
+            - **AppImage**: Standalone, portable universal executable for all Linux distributions (Ubuntu, Fedora, Arch, Debian, openSUSE, Manjaro, Linux Mint, etc.).
+              - Run with: `chmod +x Modern-PDF-Viewer-*.AppImage && ./Modern-PDF-Viewer-*.AppImage`
+            - **.deb Package**: Native Debian/Ubuntu/Mint installer package.
+              - Install with: `sudo apt install ./modern-pdf-viewer_*.deb` or `sudo dpkg -i modern-pdf-viewer_*.deb`
+            - **tar.gz**: Portable archive of the standalone Linux binaries.
+            
+            **Features:**
+            - Fast, offline, privacy-first PDF viewer and editor
+            - Freehand pencil, shapes (rect, circle, arrow, line), text notes, highlights, and strikethroughs
+            - Real-time scroll page number tracker
+            - High-precision selectable text layer for copy-pasting
+            - Zoom with mouse wheel, touchpad gestures, and double click
+            - Dark / Light theme support
+          files: |
+            release/*.AppImage
+            release/*.deb
+            release/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
