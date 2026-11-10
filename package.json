@@ -24,6 +24,7 @@
   "build": {
     "appId": "com.modernpdf.app",
     "productName": "Modern PDF Viewer",
+    "executableName": "modern-pdf-viewer",
     "directories": {
       "output": "release"
     },
@@ -43,6 +44,7 @@
         "deb",
         "tar.gz"
       ],
+      "artifactName": "${name}-${version}.${ext}",
       "category": "Office",
       "maintainer": "Modern PDF Viewer <modernpdf@app.com>",
       "synopsis": "Modern, fast, offline PDF viewer and editor",

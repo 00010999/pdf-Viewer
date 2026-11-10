@@ -25,7 +25,7 @@ jobs:
       - name: Install System Dependencies for AppImage & Deb
         run: |
           sudo apt-get update
-          sudo apt-get install -y libarchive-tools desktop-file-utils
+          sudo apt-get install -y libarchive-tools desktop-file-utils libfuse2t64 || sudo apt-get install -y libarchive-tools desktop-file-utils libfuse2 || true
 
       - name: Install Dependencies
         run: npm install
@@ -34,19 +34,24 @@ jobs:
         run: npm run build
 
       - name: Build Linux Binaries (AppImage, DEB, tar.gz)
-        run: npx electron-builder --linux --publish never 2>&1 | tee build.log
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: 1
+        run: |
+          npx electron-builder --linux AppImage deb tar.gz --publish never
 
-      - name: List Generated Linux Packages
-        run: ls -la release/
+      - name: Stage Linux Artifacts
+        run: |
+          mkdir -p dist-linux
+          find release/ -maxdepth 2 -type f \( -name "*.AppImage" -o -name "*.deb" -o -name "*.tar.gz" \) -exec cp -v {} dist-linux/ \;
+          echo "=== Staged artifacts in dist-linux ==="
+          ls -la dist-linux/
 
       - name: Upload Linux Packages as Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Modern-PDF-Viewer-Linux
-          path: |
-            release/*.AppImage
-            release/*.deb
-            release/*.tar.gz
+          path: dist-linux/*
+          if-no-files-found: error
 
       - name: Publish Linux Packages to GitHub Releases
         uses: softprops/action-gh-release@v2
@@ -70,9 +75,7 @@ jobs:
             - High-precision selectable text layer for copy-pasting
             - Zoom with mouse wheel, touchpad gestures, and double click
             - Dark / Light theme support
-          files: |
-            release/*.AppImage
-            release/*.deb
-            release/*.tar.gz
+          files: dist-linux/*
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
